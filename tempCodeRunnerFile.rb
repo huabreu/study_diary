@@ -1,2 +1,1 @@
-
-        puts "Nenhum item cad
+require 'io/console'
