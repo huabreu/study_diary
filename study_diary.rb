@@ -1,66 +1,105 @@
-INSERIR_ITENS = 1
-VIZUALIZAR_ITENS = 2
-BUSCAR_ITENS = 3
-SAIR = 4
+require 'io/console'
 
-def bem_vindo()
+INSERT = 1
+VIEW = 2
+SEARCH = 3
+MARK_AS_DONE = 4
+EXIT = 9
+
+def welcome()
     puts "\nBem-vindo ao Diario de Estudos, seu companheiro para estudar!"
 end
 
 def menu()
-    puts "[#{INSERIR_ITENS}] Cadastrar um item para estudar"
-    puts "[#{VIZUALIZAR_ITENS}] Ver todos os itens cadastrados"
-    puts "[#{BUSCAR_ITENS}] Buscar um item de estudo"
-    puts "[#{SAIR}] Sair"
+    puts <<~MENU
+    ------------------------------------------------
+    [#{INSERT}] Cadastrar um item para estudar
+    [#{VIEW}] Ver todos os itens cadastrados
+    [#{SEARCH}] Buscar um item de estudo
+    [#{MARK_AS_DONE}] Marcar um item como concluido
+    [#{EXIT}] Sair
+    ------------------------------------------------
+    MENU
     print "Escolha uma opcao: "
     gets.to_i()
 end
 
-def inserir_item()
+def insert_itens()
     print "\nDigite o titulo do seu item de estudo: "
-    titulo = gets.chomp()
-    puts "\n#1 - Ruby\n#2 - Rails\n#3 - HTML\n#4 - JavaScript "
+    title = gets.chomp()
     print "Escolha uma categoria para o seu item de estudos: "
-    categoria = gets.chomp().to_i
-    puts "\nItem #{titulo} da categoria #{categoria} cadastrado com sucesso!"
-    {titulo:titulo, categoria: categoria}
+    category = gets.chomp()
+    puts "\nItem #{title} da categoria #{category} cadastrado com sucesso!"
+    { title: title, category: category, done: false}
 end
 
-def imprimir_itens(itens)
-    itens.each do |i|
-        puts "#{i[:titulo]} - #{i[:categoria]}"
+def print_items(collection)
+    collection.each.with_index(1) do |i, index|
+        puts "##{index} - #{i[:title]} - #{i[:category]}#{' - Finalizado' if i[:done]}"
     end
-    puts  
-    if itens.empty?
+    if collection.empty?
         puts "Nenhum item cadastrado"
     end
 end
 
-def buscar_item(itens)
+def search_item(collection)
     print 'Digite uma palavra para procurar: '
-    palavra = gets.chomp()
-    itens.select {|i| i[:titulo].casecmp(palavra) == 0}
+    word = gets.chomp()
+    collection.filter do |i|
+        i[:title].include? word
+    end
 end
 
-bem_vindo()
+def mark_as_done(items)
+    not_finalized = items.filter {|i| !i[:done]}
+    print_items(not_finalized)
+    return if not_finalized.empty?
 
-itens = []
+    print 'Digite o numero do item que deseja finalizar: '
+    index = gets.to_i
+    not_finalized[index-1][:done] = true
+end
 
-opcao = menu()
+def clear
+    $stdout.clear_screen
+end
+
+def wait_keypress
+    puts "\nPressione qualquer tecla para continuar"
+    $stdin.getch
+end
+
+def wait_and_clear
+    wait_keypress
+    clear
+end
+
+clear
+
+welcome()
+
+items = []
+
+option = menu
 
 loop do
-    if opcao == INSERIR_ITENS 
-        itens << inserir_item()
-    elsif opcao == VIZUALIZAR_ITENS
-        imprimir_itens(itens)
-    elsif opcao == BUSCAR_ITENS
-        buscar_item(itens)
-    elsif opcao == SAIR
+    case option
+    when INSERT 
+        items << insert_itens()
+    when VIEW
+        print_items(items)
+    when SEARCH
+        found_items = search_item(items)
+        print_items(found_items)
+    when MARK_AS_DONE
+        mark_as_done(items)
+    when EXIT
         break
     else 
         puts "Opcao invalida!"
     end
-    opcao = menu()
+    wait_and_clear
+    option = menu
 end
 
 puts "\nObrigado por usar o Diario de Estudos!"
