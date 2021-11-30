@@ -1,105 +1,85 @@
 require 'io/console'
+require_relative 'study_item'
 
-INSERT = 1
-VIEW = 2
-SEARCH = 3
+INSERT       = 1
+VIEW_ALL     = 2
+SEARCH       = 3
 MARK_AS_DONE = 4
-EXIT = 9
+EXIT         = 5
 
-def welcome()
-    puts "\nBem-vindo ao Diario de Estudos, seu companheiro para estudar!"
-end
-
-def menu()
-    puts <<~MENU
-    ------------------------------------------------
+def menu
+  puts <<~MENU
+    -----------------------------------------
     [#{INSERT}] Cadastrar um item para estudar
-    [#{VIEW}] Ver todos os itens cadastrados
+    [#{VIEW_ALL}] Ver todos os itens cadastrados
     [#{SEARCH}] Buscar um item de estudo
-    [#{MARK_AS_DONE}] Marcar um item como concluido
+    [#{MARK_AS_DONE}] Marcar um item como concluído
     [#{EXIT}] Sair
-    ------------------------------------------------
-    MENU
-    print "Escolha uma opcao: "
-    gets.to_i()
+    -----------------------------------------
+  MENU
+  print 'Escolha uma opção: '
+  gets.to_i
 end
 
-def insert_itens()
-    print "\nDigite o titulo do seu item de estudo: "
-    title = gets.chomp()
-    print "Escolha uma categoria para o seu item de estudos: "
-    category = gets.chomp()
-    puts "\nItem #{title} da categoria #{category} cadastrado com sucesso!"
-    { title: title, category: category, done: false}
-end
-
-def print_items(collection)
-    collection.each.with_index(1) do |i, index|
-        puts "##{index} - #{i[:title]} - #{i[:category]}#{' - Finalizado' if i[:done]}"
-    end
-    if collection.empty?
-        puts "Nenhum item cadastrado"
-    end
-end
-
-def search_item(collection)
-    print 'Digite uma palavra para procurar: '
-    word = gets.chomp()
-    collection.filter do |i|
-        i[:title].include? word
-    end
-end
-
-def mark_as_done(items)
-    not_finalized = items.filter {|i| !i[:done]}
-    print_items(not_finalized)
-    return if not_finalized.empty?
-
-    print 'Digite o numero do item que deseja finalizar: '
-    index = gets.to_i
-    not_finalized[index-1][:done] = true
+def print_study_items(collection)
+  puts collection
+  puts 'Nenhum item encontrado' if collection.empty?
 end
 
 def clear
-    $stdout.clear_screen
+  system 'clear'
 end
 
 def wait_keypress
-    puts "\nPressione qualquer tecla para continuar"
-    $stdin.getch
+  puts
+  puts 'Pressione qualquer tecla para continuar'
+  STDIN.getch
 end
 
 def wait_and_clear
-    wait_keypress
-    clear
+  wait_keypress
+  clear
+end
+
+def search_study_items
+  print 'Digite uma palavra para procurar: '
+  term = gets.chomp
+  StudyItem.search(term)
+end
+
+def mark_study_item_as_done
+  not_finalized = StudyItem.undone
+  print_study_items(not_finalized)
+  return if not_finalized.empty?
+
+  print 'Digite o número que deseja finalizar: '
+  index = gets.to_i
+  not_finalized[index - 1].done!
 end
 
 clear
-
-welcome()
-
-items = []
+puts 'Boas-vindas ao Diário de Estudos, seu companheiro para estudar!'
 
 option = menu
 
 loop do
-    case option
-    when INSERT 
-        items << insert_itens()
-    when VIEW
-        print_items(items)
-    when SEARCH
-        found_items = search_item(items)
-        print_items(found_items)
-    when MARK_AS_DONE
-        mark_as_done(items)
-    when EXIT
-        break
-    else 
-        puts "Opcao invalida!"
-    end
-    wait_and_clear
-    option = menu
+  case option
+  when INSERT
+    StudyItem.create
+  when VIEW_ALL
+    print_study_items(StudyItem.all)
+  when SEARCH
+    found_items = search_study_items
+    print_study_items(found_items)
+  when MARK_AS_DONE
+    mark_study_item_as_done
+  when EXIT
+    break
+  else
+    puts 'Opção inválida'
+  end
+  wait_and_clear
+  option = menu
 end
 
-puts "\nObrigado por usar o Diario de Estudos!"
+puts 'Obrigado por usar o Diário de Estudos'
